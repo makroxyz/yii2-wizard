@@ -330,7 +330,7 @@ class WizardBehavior extends \yii\base\Behavior
      */
     public function getCurrentStep()
     {
-        return array_search($this->_currentStep, $this->_steps) + 1;
+        return array_search($this->_currentStep, array_values($this->_steps)) + 1;
     }
     
     /**
@@ -364,7 +364,7 @@ class WizardBehavior extends \yii\base\Behavior
 //            $label = ucwords(trim(strtolower(str_replace(array('-', '_', '.'), ' ', preg_replace('/(?<![A-Z])[A-Z]/', ' \0', $step)))));
             $label = Inflector::humanize($step, true);
         }
-        $index = array_search($step, $this->_steps) + 1;
+        $index = array_search($step, array_values($this->_steps)) + 1;
         return Html::tag('span', $index, ['class' => 'badge']) . " " . $label;
     }
 
@@ -464,7 +464,7 @@ class WizardBehavior extends \yii\base\Behavior
         if ($this->autoAdvance) {
             $step = $this->getExpectedStep();
         } else {
-            $index = array_search($this->_currentStep, $this->_steps) + 1;
+            $index = array_search($this->_currentStep, array_values($this->_steps)) + 1;
             $step = ($index < $this->_steps->count() ? $this->_steps[$index] : null);
         }
         if ($this->timeout) {
@@ -479,7 +479,7 @@ class WizardBehavior extends \yii\base\Behavior
      */
     protected function previousStep()
     {
-        $index = array_search($this->_currentStep, $this->_steps) - 1;
+        $index = array_search($this->_currentStep, array_values($this->_steps)) - 1;
         $this->redirect($this->_steps[($index > 0 ? $index : 0)]);
     }
 
@@ -576,12 +576,12 @@ class WizardBehavior extends \yii\base\Behavior
      */
     protected function isValidStep($step)
     {
-        $index = array_search($step, $this->_steps);
+        $index = array_search($step, array_values($this->_steps));
         if ($index >= 0) {
             if ($this->forwardOnly) {
-                return $index === array_search($this->getExpectedStep(), $this->_steps);
+                return $index === array_search($this->getExpectedStep(), array_values($this->_steps));
             }
-            return $index <= array_search($this->getExpectedStep(), $this->_steps);
+            return $index <= array_search($this->getExpectedStep(), array_values($this->_steps));
         }
         return false;
     }
