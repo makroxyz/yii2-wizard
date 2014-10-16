@@ -1,6 +1,6 @@
 <?php
 
-namespace backend\components;
+namespace makroxyz\wizard;
 
 use Yii;
 use yii\base\Event;
