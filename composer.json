@@ -1,5 +1,5 @@
 {
-    "name": "hal/yii2-wizard",
+    "name": "makroxyz/yii2-wizard",
     "description": "Wizard behavior for Yii Framework 2.0",
     "keywords": ["yii2", "extension", "wizard"],
     "type": "yii2-extension",
