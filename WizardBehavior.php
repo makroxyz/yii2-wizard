@@ -437,7 +437,8 @@ class WizardBehavior extends \yii\base\Behavior
         if (!empty($this->menuLastItem)) {
             $items[] = [
                 'label' => $this->menuLastItem,
-                'active' => false
+                'active' => false,
+                'options' => ['class' => 'disabled']
             ];
         }
         return $items;
@@ -763,46 +764,6 @@ class WizardBehavior extends \yii\base\Behavior
         $this->reset();
         $this->owner->redirect($this->draftSavedUrl);
     }
-
-//    public function onCancelled($event)
-//    {
-//        $this->raiseEvent('onCancelled', $event);
-//    }
-//
-//    public function onExpiredStep($event)
-//    {
-//        $this->raiseEvent('onExpiredStep', $event);
-//    }
-//
-//    public function onFinished($event)
-//    {
-//        $this->raiseEvent('onFinished', $event);
-//    }
-//
-//    public function onInvalidStep($event)
-//    {
-//        $this->raiseEvent('onInvalidStep', $event);
-//    }
-//
-//    public function onProcessStep($event)
-//    {
-//        $this->raiseEvent('onProcessStep', $event);
-//    }
-//
-//    public function onReset($event)
-//    {
-//        $this->raiseEvent('onReset', $event);
-//    }
-//
-//    public function onSaveDraft($event)
-//    {
-//        $this->raiseEvent('onSaveDraft', $event);
-//    }
-//
-//    public function onStart($event)
-//    {
-//        $this->raiseEvent('onStart', $event);
-//    }
 }
 /**
  * Wizard event class.
