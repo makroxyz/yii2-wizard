@@ -342,7 +342,7 @@ class WizardBehavior extends \yii\base\Behavior
         if ($this->_currentStep == reset($this->_steps)) {
             return false;
         }
-        return [$this->owner->id . '/' . $this->owner->action->id] + [$this->previousButton => ''];
+        return [$this->owner->id . '/' . $this->owner->action->id] + [$this->queryParam => $this->_currentStep, $this->previousButton => ''];
     }
 
     /**
@@ -465,7 +465,7 @@ class WizardBehavior extends \yii\base\Behavior
             $step = $this->getExpectedStep();
         } else {
             $index = array_search($this->_currentStep, array_values($this->_steps)) + 1;
-            $step = ($index < $this->_steps->count() ? $this->_steps[$index] : null);
+            $step = ($index < $this->_steps->count() ? array_values($this->_steps)[$index] : null);
         }
         if ($this->timeout) {
             $this->_session[$this->_timeoutKey] = time() + $this->timeout;
@@ -480,7 +480,7 @@ class WizardBehavior extends \yii\base\Behavior
     protected function previousStep()
     {
         $index = array_search($this->_currentStep, array_values($this->_steps)) - 1;
-        $this->redirect($this->_steps[($index > 0 ? $index : 0)]);
+        $this->redirect(array_values($this->_steps)[($index > 0 ? $index : 0)]);
     }
 
     /**
