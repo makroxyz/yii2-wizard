@@ -14,7 +14,7 @@ use yii\helpers\Inflector;
  * Handles multi-step form navigation, data persistence, and plot-branching
  * navigation.
  *
- * @author Marco Curatitoli <makro76@gmail.com>
+ * @author Marco Curatitoli <makroxyz@gmail.com>
  * This is Yii2 porting of original wizard-behavior code. Read below for credits.
  *
  * Wizard Behavoir also allows steps to be expired, the saving and restoring of
