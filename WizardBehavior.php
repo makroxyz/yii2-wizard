@@ -465,7 +465,7 @@ class WizardBehavior extends \yii\base\Behavior
             $step = $this->getExpectedStep();
         } else {
             $index = array_search($this->_currentStep, array_values($this->_steps)) + 1;
-            $step = ($index < $this->_steps->count() ? array_values($this->_steps)[$index] : null);
+            $step = ($index < count($this->_steps) ? array_values($this->_steps)[$index] : null);
         }
         if ($this->timeout) {
             $this->_session[$this->_timeoutKey] = time() + $this->timeout;
