@@ -471,7 +471,7 @@ class WizardBehavior extends \yii\base\Behavior
             $this->_session[$this->_timeoutKey] = time() + $this->timeout;
         }
 
-        $this->redirect($step);
+        return $this->redirect($step);
     }
 
     /**
@@ -514,7 +514,7 @@ class WizardBehavior extends \yii\base\Behavior
             $step = $this->getExpectedStep();
         }
         $url = [$this->owner->id . '/' . $this->owner->action->id, $this->queryParam => $step];
-        $this->owner->redirect($url, $terminate, $statusCode);
+        return $this->owner->redirect($url, $terminate, $statusCode);
     }
 
     /**
@@ -681,7 +681,7 @@ class WizardBehavior extends \yii\base\Behavior
         $event = new WizardEvent($step, $this->read());
         $this->owner->trigger(self::EVENT_WIZARD_CANCELLED, $event);
         $this->reset();
-        $this->owner->redirect($this->cancelledUrl);
+        return $this->owner->redirect($this->cancelledUrl);
     }
 
     /**
@@ -695,7 +695,7 @@ class WizardBehavior extends \yii\base\Behavior
             return true;
         }
         $this->reset();
-        $this->owner->redirect($this->expiredUrl);
+        return $this->owner->redirect($this->expiredUrl);
     }
 
     /**
@@ -710,7 +710,7 @@ class WizardBehavior extends \yii\base\Behavior
         if ($event->handled) {
             return;
         }
-        $this->owner->redirect($this->finishedUrl);
+        return $this->owner->redirect($this->finishedUrl);
     }
 
     /**
@@ -720,7 +720,7 @@ class WizardBehavior extends \yii\base\Behavior
     {
         $event = new WizardEvent($step);
         $this->owner->trigger(self::EVENT_WIZARD_INVALID_STEP, $event);
-        $this->redirect();
+        return $this->redirect();
     }
 
     /**
@@ -762,7 +762,7 @@ class WizardBehavior extends \yii\base\Behavior
         ));
         $this->owner->trigger(self::EVENT_WIZARD_SAVE_DRAFT, $event);
         $this->reset();
-        $this->owner->redirect($this->draftSavedUrl);
+        return $this->owner->redirect($this->draftSavedUrl);
     }
 }
 /**
