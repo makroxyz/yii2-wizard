@@ -3,7 +3,6 @@
 namespace makroxyz\wizard;
 
 use Yii;
-use yii\base\Event;
 use yii\helpers\ArrayHelper;
 use yii\web\Session;
 use yii\helpers\Html;
@@ -27,7 +26,7 @@ use yii\helpers\Inflector;
  * @since			V1.0.0
  * @version		$Revision: 6 $
  * @license		BSD License (see documentation)
-   */
+ */
 /**
  * Wizard Behavior class
  */
@@ -36,7 +35,6 @@ class WizardBehavior extends \yii\base\Behavior
     const BRANCH_SELECT = 'Select';
     const BRANCH_SKIP = 'Skip';
     const BRANCH_DESELECT = 'Deselect';
-    
     const EVENT_WIZARD_CANCELLED = 'wizardCancelled';
     const EVENT_WIZARD_EXPIRED_STEP = 'wizardExpiredStep';
     const EVENT_WIZARD_RESET = 'wizardReset';
@@ -45,7 +43,7 @@ class WizardBehavior extends \yii\base\Behavior
     const EVENT_WIZARD_START = 'wizardStart';
     const EVENT_WIZARD_INVALID_STEP = 'wizardInvalidStep';
     const EVENT_WIZARD_SAVE_DRAFT = 'wizardSaveDraft';
-    
+
     /**
      * @property boolean If true, the behavior will redirect to the "expected step"
      * after a step has been successfully completed. If false, it will redirect to
@@ -152,13 +150,26 @@ class WizardBehavior extends \yii\base\Behavior
      * there is an additional previousItemCssClass that is applied to previous items.
      * @see getMenu()
      */
-    public $menuProperties = [];
+    public $menuConfig = [];
     /**
      * @property string If not empty, this is added to the menu as the last item.
      * Used to add the conclusion, i.e. what happens when the wizard completes -
      * e.g. Register, to a menu.
      */
     public $menuLastItem;
+    /**
+     * @var string buttons template
+     */
+    public $buttonsTemplate = "<div class=\"row\">\n<div class=\"col-sm-6\">{previous}</div>\n<div class=\"col-sm-6 text-right\">{next}{finish}</div>\n</div>";
+    /**
+     * @var wizard button class
+     */
+    public $buttonClass = 'yii\bootstrap\Button';
+    /**
+     * @var wizard buttons config
+     * keys are 'previous', 'next', 'finish'
+     */
+    public $buttonConfig = [];
     /**
      * @var string Internal step tracking.
      */
@@ -194,20 +205,41 @@ class WizardBehavior extends \yii\base\Behavior
     /**
      * @var array default menu properties 
      */
-    private $_defaultMenuProperties = [
+    private $_defaultMenuConfig = [
         'id' => 'wizard-nav',
         'encodeLabels' => false,
-        'options' => ['class' => 'nav nav-navbar']
-//        'activeCssClass' => 'wzd-active',
-//        'firstItemCssClass' => 'wzd-first',
-//        'lastItemCssClass' => 'wzd-last',
-//        'previousItemCssClass' => 'wzd-previous'
+        'options' => ['class' => 'navbar-nav']
     ];
-    
+    /**
+     * @var array default buttons properties 
+     */
+    private $_defaultButtonConfig = [
+        'previous' => [
+            'tagName' => 'a',
+            'options' => ['class' => 'btn-default'],
+        ],
+        'next' => [
+            'options' => ['class' => 'btn-primary', 'type' => 'submit']
+        ],
+        'finish' => [
+            'options' => ['class' => 'btn-success', 'type' => 'submit']
+        ],
+    ];
+
     public function init()
     {
         parent::init();
-        $this->menuProperties = ArrayHelper::merge($this->_defaultMenuProperties, $this->menuProperties);
+        $this->menuConfig = ArrayHelper::merge($this->_defaultMenuConfig, $this->menuConfig);
+        $this->buttonConfig = ArrayHelper::merge($this->_defaultButtonConfig, $this->buttonConfig);
+        Yii::$app->i18n->translations['wizard'] = [
+            'class' => 'yii\i18n\PhpMessageSource',
+            'basePath' => '@vendor/makroxyz/yii2-wizard/messages',
+            'sourceLanguage' => 'en-US',
+//            'fileMap' => [
+//                'app' => 'app.php',
+//                'app/error' => 'error.php',
+//            ],
+        ];
     }
 
     /**
@@ -235,7 +267,7 @@ class WizardBehavior extends \yii\base\Behavior
 
         $this->parseSteps();
     }
-    
+
     /**
      * Run the wizard for the given step.
      * This method is called from the controller action using the wizard
@@ -243,7 +275,6 @@ class WizardBehavior extends \yii\base\Behavior
      */
     public function process($step)
     {
-
         if (isset($_REQUEST[$this->cancelButton])) {
             $this->cancelled($step); // Ends the wizard
         } elseif (isset($_REQUEST[$this->resetButton]) && !$this->forwardOnly) {
@@ -275,6 +306,54 @@ class WizardBehavior extends \yii\base\Behavior
                 $this->invalidStep($step);
             }
         }
+    }
+    
+    public function renderButtons()
+    {
+        $previousConfig = ArrayHelper::getValue($this->buttonConfig, 'previous');
+        if (!isset($previousConfig['class'])) {
+            $previousConfig['class'] = $this->buttonClass;
+        }
+        if (!isset($previousConfig['label'])) {
+            $previousConfig['label'] = Yii::t('wizard', 'Previous');
+        }
+        if ($this->previousRoute === false) {
+            Html::addCssClass($previousConfig['options'], 'disabled');
+            $previousConfig['options']['href'] = '#';
+        } else {
+            $previousConfig['options']['href'] = $this->previousRoute;
+        }
+        $previous = Yii::createObject($previousConfig)->run();
+        
+        $nextConfig = ArrayHelper::getValue($this->buttonConfig, 'next');
+        if (!isset($nextConfig['class'])) {
+            $nextConfig['class'] = $this->buttonClass;
+        }
+        if (!isset($nextConfig['label'])) {
+            $nextConfig['label'] = Yii::t('wizard', 'Next');
+        }
+        if ($this->isLastStep) {
+            Html::addCssClass($nextConfig['options'], 'disabled');
+        }
+        $next = Yii::createObject($nextConfig)->run();
+        
+        $finish = '';
+        if ($this->isLastStep) {
+            $finishConfig = ArrayHelper::getValue($this->buttonConfig, 'finish');
+            if (!isset($finishConfig['class'])) {
+                $finishConfig['class'] = $this->buttonClass;
+            }
+            if (!isset($finishConfig['label'])) {
+                $finishConfig['label'] = Yii::t('wizard', 'Finish');
+            }
+            $finish = Yii::createObject($finishConfig)->run();
+        }
+        
+        return strtr($this->buttonsTemplate, [
+            '{previous}' => $previous,
+            '{next}' => $next,
+            '{finish}' => $finish,
+        ]);
     }
 
     /**
@@ -337,6 +416,15 @@ class WizardBehavior extends \yii\base\Behavior
      * Returns the one-based index of the current step.
      * Note that this is for the current steps; branching may vary the index of a given step
      */
+    public function getIsLastStep()
+    {
+        return ($this->stepCount == $this->_currentStep);
+    }
+
+    /**
+     * Returns the one-based index of the current step.
+     * Note that this is for the current steps; branching may vary the index of a given step
+     */
     public function getPreviousRoute()
     {
         if ($this->_currentStep == reset($this->_steps)) {
@@ -351,7 +439,7 @@ class WizardBehavior extends \yii\base\Behavior
      */
     public function getStepCount()
     {
-        return $this->_steps->count();
+        return count($this->_steps);
     }
 
     public function getStepLabel($step = null)
@@ -381,31 +469,37 @@ class WizardBehavior extends \yii\base\Behavior
     /**
      * Sets the menu object or the menu object properties.
      * If the value is an object, it must have a property named items.
-     * If the value is an array it is an array of CMenu properties that are merged with {@link $menuProperties}
+     * If the value is an array it is an array of CMenu properties that are merged with {@link $menuConfig}
      * @param mixed object: Menu object; array: name=>value property pairs for CMenu
      */
     public function setMenu($value)
     {
         if (is_array($value)) {
-            $this->menuProperties = array_merge($this->menuProperties, $value);
+            $this->menuConfig = array_merge($this->menuConfig, $value);
         } elseif (is_object($value)) {
             $this->_menu = $value;
         }
     }
 
     /**
-     * @return CMenu
+     * @return object
      */
     public function getMenu()
     {
         if (null === $this->_menu) {
-            $properties = $this->menuProperties;
-//            unset($properties['previousItemCssClass']);
+            $properties = $this->menuConfig;
             $properties['class'] = $this->menuClass;
             $this->_menu = Yii::createObject($properties);
         }
         $this->_menu->items = $this->getMenuItems();
         return $this->_menu;
+    }
+    /**
+     * @return CMenu
+     */
+    public function renderMenu()
+    {
+        return $this->getMenu()->run();
     }
 
     public function getMenuItems()
@@ -428,8 +522,8 @@ class WizardBehavior extends \yii\base\Behavior
                 Html::addCssClass($item['options'], 'disabled');
             }
             $item['active'] = $step === $this->_currentStep;
-//            if ($previous && !empty($this->menuProperties['previousItemCssClass'])) {
-//                $item['options'] = ['class' => $this->menuProperties['previousItemCssClass']];
+//            if ($previous && !empty($this->menuConfig['previousItemCssClass'])) {
+//                $item['options'] = ['class' => $this->menuConfig['previousItemCssClass']];
 //            }
 
             $items[] = $item;
@@ -504,17 +598,16 @@ class WizardBehavior extends \yii\base\Behavior
     /**
      * Handles Wizard redirection. A null url will redirect to the "expected" step.
      * @param string Step to redirect to.
-     * @param boolean If true, the application terminates after the redirect
      * @param integer HTTP status code (eg: 404)
      * @see yii\web\Controller::redirect()
      */
-    protected function redirect($step = null, $terminate = true, $statusCode = 302)
+    protected function redirect($step = null, $statusCode = 302)
     {
         if (!is_string($step)) {
             $step = $this->getExpectedStep();
         }
         $url = [$this->owner->id . '/' . $this->owner->action->id, $this->queryParam => $step];
-        return $this->owner->redirect($url, $terminate, $statusCode);
+        return $this->owner->redirect($url, $statusCode);
     }
 
     /**
@@ -656,7 +749,7 @@ class WizardBehavior extends \yii\base\Behavior
         $this->_session[$this->_branchKey][$branch] : null
         );
     }
-    
+
     /**
      * Raises the onStarted event.
      * The event handler must set the event::handled property TRUE for the wizard
@@ -763,21 +856,5 @@ class WizardBehavior extends \yii\base\Behavior
         $this->owner->trigger(self::EVENT_WIZARD_SAVE_DRAFT, $event);
         $this->reset();
         return $this->owner->redirect($this->draftSavedUrl);
-    }
-}
-/**
- * Wizard event class.
- * This is the event raised by the wizard.
- */
-class WizardEvent extends Event
-{
-    public $step;
-    public $saved;
-
-    public function __construct($step = null, $saved = null, $config = [])
-    {
-        $this->step = $step;
-        $this->saved = $saved;
-        parent::__construct($config);
     }
 }
