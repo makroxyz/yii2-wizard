@@ -3,10 +3,13 @@
 namespace makroxyz\wizard;
 
 use Yii;
+use yii\base\NotSupportedException;
 use yii\helpers\ArrayHelper;
-use yii\web\Session;
 use yii\helpers\Html;
 use yii\helpers\Inflector;
+use yii\helpers\Url;
+use yii\web\Controller;
+use yii\web\Session;
 
 /**
  * Wizard Behavior class file.
@@ -235,10 +238,6 @@ class WizardBehavior extends \yii\base\Behavior
             'class' => 'yii\i18n\PhpMessageSource',
             'basePath' => '@vendor/makroxyz/yii2-wizard/messages',
             'sourceLanguage' => 'en-US',
-//            'fileMap' => [
-//                'app' => 'app.php',
-//                'app/error' => 'error.php',
-//            ],
         ];
     }
 
@@ -246,12 +245,12 @@ class WizardBehavior extends \yii\base\Behavior
      * Attaches this behavior to the owner.
      * In addition to the \yii\base\Behavior default implementation, the owner's event
      * handlers for wizard events are also attached.
-     * @param \yii\web\Controller $owner The controller that this behavior is to be attached to.
+     * @param Controller $owner The controller that this behavior is to be attached to.
      */
     public function attach($owner)
     {
-        if (!($owner instanceof \yii\web\Controller)) {
-            throw new \yii\base\NotSupportedException(Yii::t('wizard', 'Owner must be an instance of \yii\web\Controller'));
+        if (!($owner instanceof Controller)) {
+            throw new NotSupportedException(Yii::t('wizard', 'Owner must be an instance of \yii\web\Controller'));
         }
 
         parent::attach($owner);
@@ -276,7 +275,7 @@ class WizardBehavior extends \yii\base\Behavior
     public function process($step)
     {
         if (isset($_REQUEST[$this->cancelButton])) {
-            $this->cancelled($step); // Ends the wizard
+            return $this->cancelled($step); // Ends the wizard
         } elseif (isset($_REQUEST[$this->resetButton]) && !$this->forwardOnly) {
             $this->resetWizard($step); // Restarts the wizard
             $step = null;
@@ -284,26 +283,26 @@ class WizardBehavior extends \yii\base\Behavior
 
         if (empty($step)) {
             if (!$this->hasStarted() && !$this->start()) {
-                $this->finished(false);
+                return $this->finished(false);
             }
             if ($this->hasCompleted()) {
-                $this->finished(true);
+                return $this->finished(true);
             } else {
-                $this->nextStep();
+                return $this->nextStep();
             }
         } else {
             if ($this->isValidStep($step)) {
                 $this->_currentStep = $step;
                 if (!$this->forwardOnly && isset($_REQUEST[$this->previousButton])) {
-                    $this->previousStep();
+                    return $this->previousStep();
                 } elseif ($this->processStep()) {
                     if (isset($_REQUEST[$this->saveDraftButton])) {
-                        $this->saveDraft($step); // Ends the wizard
+                        return $this->saveDraft($step); // Ends the wizard
                     }
-                    $this->nextStep();
+                    return $this->nextStep();
                 }
             } else {
-                $this->invalidStep($step);
+                return $this->invalidStep($step);
             }
         }
     }
@@ -321,7 +320,7 @@ class WizardBehavior extends \yii\base\Behavior
             Html::addCssClass($previousConfig['options'], 'disabled');
             $previousConfig['options']['href'] = '#';
         } else {
-            $previousConfig['options']['href'] = $this->previousRoute;
+            $previousConfig['options']['href'] = Url::to($this->previousRoute);
         }
         $previous = Yii::createObject($previousConfig)->run();
         
@@ -599,7 +598,7 @@ class WizardBehavior extends \yii\base\Behavior
      * Handles Wizard redirection. A null url will redirect to the "expected" step.
      * @param string Step to redirect to.
      * @param integer HTTP status code (eg: 404)
-     * @see yii\web\Controller::redirect()
+     * @see Controller::redirect()
      */
     protected function redirect($step = null, $statusCode = 302)
     {
