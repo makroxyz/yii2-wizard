@@ -398,8 +398,7 @@ class WizardBehavior extends \yii\base\Behavior
     {
         return (empty($step) ?
         $this->_session->get($this->_stepsKey) :
-        ArrayHelper::getValue($this->_session->get($this->_stepsKey), $step)
-        );
+        ArrayHelper::getValue($this->_session->get($this->_stepsKey), $step));
     }
 
     /**
@@ -823,7 +822,7 @@ class WizardBehavior extends \yii\base\Behavior
      */
     protected function processStep()
     {
-        $event = new WizardEvent($this->_currentStep, $this->read($this->_currentStep));
+        $event = new WizardEvent($this->_currentStep, $this->read());
         $this->owner->trigger(self::EVENT_WIZARD_PROCESS_STEP, $event);
         if ($event->handled && $this->hasExpired()) {
             $this->expired($this->_currentStep);
