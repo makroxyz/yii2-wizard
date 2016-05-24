@@ -324,19 +324,8 @@ class WizardBehavior extends \yii\base\Behavior
         }
         $previous = Yii::createObject($previousConfig)->run();
         
-        $nextConfig = ArrayHelper::getValue($this->buttonConfig, 'next');
-        if (!isset($nextConfig['class'])) {
-            $nextConfig['class'] = $this->buttonClass;
-        }
-        if (!isset($nextConfig['label'])) {
-            $nextConfig['label'] = Yii::t('wizard', 'Next');
-        }
-        if ($this->isLastStep) {
-            Html::addCssClass($nextConfig['options'], 'disabled');
-        }
-        $next = Yii::createObject($nextConfig)->run();
-        
         $finish = '';
+        $next = '';
         if ($this->isLastStep) {
             $finishConfig = ArrayHelper::getValue($this->buttonConfig, 'finish');
             if (!isset($finishConfig['class'])) {
@@ -346,6 +335,18 @@ class WizardBehavior extends \yii\base\Behavior
                 $finishConfig['label'] = Yii::t('wizard', 'Finish');
             }
             $finish = Yii::createObject($finishConfig)->run();
+        } else {
+            $nextConfig = ArrayHelper::getValue($this->buttonConfig, 'next');
+            if (!isset($nextConfig['class'])) {
+                $nextConfig['class'] = $this->buttonClass;
+            }
+            if (!isset($nextConfig['label'])) {
+                $nextConfig['label'] = Yii::t('wizard', 'Next');
+            }
+            if ($this->isLastStep) {
+                Html::addCssClass($nextConfig['options'], 'disabled');
+            }
+            $next = Yii::createObject($nextConfig)->run();
         }
         
         return strtr($this->buttonsTemplate, [
@@ -416,7 +417,7 @@ class WizardBehavior extends \yii\base\Behavior
      */
     public function getIsLastStep()
     {
-        return ($this->stepCount == $this->_currentStep);
+        return (($this->stepCount-1) == array_search($this->_currentStep, array_values($this->_steps)));
     }
 
     /**
