@@ -640,7 +640,7 @@ class WizardBehavior extends \yii\base\Behavior
                     $name = $directive;
                     $directive = self::BRANCH_SELECT;
                 }
-                $branches->add($name, $directive);
+                $branches[$name] = $directive;
             }
         }
         $this->_session[$this->_branchKey] = $branches;
@@ -744,7 +744,7 @@ class WizardBehavior extends \yii\base\Behavior
      */
     private function branchDirective($branch)
     {
-        return (isset($this->_session[$this->_branchKey]) ?
+        return (isset($this->_session[$this->_branchKey]) && isset($this->_session[$this->_branchKey][$branch]) ? 
         $this->_session[$this->_branchKey][$branch] : null
         );
     }
