@@ -161,6 +161,10 @@ class WizardBehavior extends \yii\base\Behavior
      */
     public $menuLastItem;
     /**
+     * @property array
+     */
+    public $menuItemOptions = [];
+    /**
      * @var string buttons template
      */
     public $buttonsTemplate = "<div class=\"row\">\n<div class=\"col-sm-6\">{previous}</div>\n<div class=\"col-sm-6 text-right\">{next}{finish}</div>\n</div>";
@@ -355,6 +359,50 @@ class WizardBehavior extends \yii\base\Behavior
             '{finish}' => $finish,
         ]);
     }
+    
+    public function renderPrevButton()
+    {
+        $previousConfig = ArrayHelper::getValue($this->buttonConfig, 'previous');
+        if (!isset($previousConfig['class'])) {
+            $previousConfig['class'] = $this->buttonClass;
+        }
+        if (!isset($previousConfig['label'])) {
+            $previousConfig['label'] = Yii::t('wizard', 'Previous');
+        }
+        if ($this->previousRoute === false) {
+            Html::addCssClass($previousConfig['options'], 'disabled');
+            $previousConfig['options']['href'] = '#';
+        } else {
+            $previousConfig['options']['href'] = Url::to($this->previousRoute);
+        }
+        return Yii::createObject($previousConfig)->run();
+    }
+    
+    public function renderNextButton()
+    {
+        if ($this->isLastStep) {
+            $finishConfig = ArrayHelper::getValue($this->buttonConfig, 'finish');
+            if (!isset($finishConfig['class'])) {
+                $finishConfig['class'] = $this->buttonClass;
+            }
+            if (!isset($finishConfig['label'])) {
+                $finishConfig['label'] = Yii::t('wizard', 'Finish');
+            }
+            return Yii::createObject($finishConfig)->run();
+        } else {
+            $nextConfig = ArrayHelper::getValue($this->buttonConfig, 'next');
+            if (!isset($nextConfig['class'])) {
+                $nextConfig['class'] = $this->buttonClass;
+            }
+            if (!isset($nextConfig['label'])) {
+                $nextConfig['label'] = Yii::t('wizard', 'Next');
+            }
+            if ($this->isLastStep) {
+                Html::addCssClass($nextConfig['options'], 'disabled');
+            }
+            return Yii::createObject($nextConfig)->run();
+        }
+    }
 
     /**
      * Sets data into wizard session. Particularly useful if the data
@@ -511,6 +559,9 @@ class WizardBehavior extends \yii\base\Behavior
         // We should not have a url for earlier steps if forwards only
         foreach ($this->_steps as $step) {
             $item = [];
+            if (isset($this->menuItemOptions[$step])) {
+                $item['options'] = $this->menuItemOptions[$step];
+            }
             $item['label'] = $this->getStepLabel($step);
             if (($previous && !$this->forwardOnly) || ($step === $this->_currentStep)) {
                 $item['url'] = $url + [$this->queryParam => $step];
@@ -531,8 +582,11 @@ class WizardBehavior extends \yii\base\Behavior
             $items[] = [
                 'label' => $this->menuLastItem,
                 'active' => false,
-                'options' => ['class' => 'disabled']
             ];
+            if (isset($this->menuItemOptions[$step])) {
+                $item['options'] = $this->menuItemOptions[$step];
+            }
+            Html::addCssClass($item['options'], 'disabled');
         }
         return $items;
 //        $this->_menu->items = $items;
